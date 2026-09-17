@@ -1,0 +1,6 @@
+ADMIN_BOOTSTRAP_EMAIL=owner@example.com
+ADMIN_BOOTSTRAP_PASSWORD=set-a-strong-unique-password
+SESSION_SECRET=set-at-least-32-random-characters
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+CONTACT_EMAIL=hello@example.com
