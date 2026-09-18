@@ -79,7 +79,7 @@ app.post("/api/rooms", async (c) => {
   const admin = await adminFromRequest(c.req.raw, c.env);
   const now = Date.now();
   await c.env.DB.prepare("INSERT INTO rooms (id,code,case_id,case_version,host_user_id,status,progress,last_activity_at,created_at) VALUES (?,?,?,?,?,'WAITING',0,?,?)")
-    .bind(crypto.randomUUID(), code, "case-room-404", 1, admin?.id ?? null, now, now).run();
+    .bind(crypto.randomUUID(), code, "case-room-404", 2, admin?.id ?? null, now, now).run();
   const response = await proxyRoom(c.req.raw, c.env, code, "/create", "POST", JSON.stringify({ code, displayName: parsed.data.displayName, hostUserId: admin?.id, owner: admin?.role === "OWNER" }));
   const payload = await response.json<{ state: unknown; token: string }>();
   await c.env.DB.prepare("INSERT INTO analytics_events (id,event_name,room_id,case_id,created_at) SELECT ?,'room_created',id,case_id,? FROM rooms WHERE code=?").bind(crypto.randomUUID(), now, code).run();
@@ -157,7 +157,7 @@ app.post("/api/admin/test-room", requireAdmin, async (c) => {
   const admin = c.get("admin")!;
   const code = await createRoomCode(c.env); const now = Date.now();
   await c.env.DB.prepare("INSERT INTO rooms (id,code,case_id,case_version,host_user_id,status,progress,last_activity_at,created_at) VALUES (?,?,?,?,?,'WAITING',0,?,?)")
-    .bind(crypto.randomUUID(), code, "case-room-404", 1, admin.id, now, now).run();
+    .bind(crypto.randomUUID(), code, "case-room-404", 2, admin.id, now, now).run();
   const response = await roomStub(c.env, code).fetch(new Request("https://room/create", { method: "POST", body: JSON.stringify({ code, displayName: "OWNER TEST", hostUserId: admin.id, owner: true }) }));
   const payload = await response.json<{ state: unknown; token: string }>();
   await c.env.DB.prepare("INSERT INTO analytics_events (id,event_name,room_id,case_id,metadata_json,created_at) SELECT ?,'room_created',id,case_id,?,? FROM rooms WHERE code=?")

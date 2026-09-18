@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { InvestigationView } from './investigation';
 
 export const localeSchema = z.enum(["en-US", "pt-BR"]);
 export type Locale = z.infer<typeof localeSchema>;
@@ -23,6 +24,7 @@ export type CaseNode = z.infer<typeof caseNodeSchema>;
 export const puzzleSchema = z.object({
   id: z.string(), stage: z.number().int().nonnegative(), inputRole: roleSchema.optional(), nodeType: nodeTypeSchema,
   checkpoint: z.boolean().optional(), paywallCheckpoint: z.boolean().optional(), optional: z.boolean().optional(),
+  hint: z.object({ 'en-US': z.string(), 'pt-BR': z.string() }).optional(),
 });
 export type Puzzle = z.infer<typeof puzzleSchema>;
 
@@ -46,6 +48,8 @@ export interface PlayerView {
 }
 
 export interface PublicRoomState {
+  caseVersion?: number;
+  investigation?: InvestigationView;
   code: string;
   status: RoomStatus;
   stage: number;
@@ -64,7 +68,7 @@ export interface PublicRoomState {
 }
 
 export const actionSchema = z.object({
-  type: z.enum(["START", "SUBMIT_CODE", "VOTE", "CONFIRM_DIGIT", "TRACE_PATH", "CALL_DECISION", "OPTIONAL_CODE", "CONTINUE", "FINAL_ANSWER"]),
+  type: z.enum(["START", "SUBMIT_CODE", "VOTE", "CONFIRM_DIGIT", "TRACE_PATH", "CALL_DECISION", "OPTIONAL_CODE", "CONTINUE", "FINAL_ANSWER", "HINT", "REORDER", "FLIP", "EXAMINE", "DRAFT", "ANALYZE"]),
   value: z.union([z.string(), z.array(z.string())]).optional(),
 });
 export type GameAction = z.infer<typeof actionSchema>;
@@ -101,4 +105,4 @@ export const ROOM_404_PUBLIC: CaseDefinition = caseSchema.parse({
 });
 
 export const visibleNodesForRole = (role: PlayerRole, stage: number) =>
-  ROOM_404_PUBLIC.acts.flatMap((act) => act.scenes).flatMap((scene) => scene.nodes).filter((node) => node.shared || !node.roles || node.roles.includes(role)).slice(0, Math.max(1, stage));
+  ROOM_404_PUBLIC.acts.flatMap((act) => act.scenes).filter((scene) => (scene.puzzle?.stage ?? (scene.id === 'ending' ? 10 : 0)) <= stage).flatMap((scene) => scene.nodes).filter((node) => node.shared || !node.roles || node.roles.includes(role));
